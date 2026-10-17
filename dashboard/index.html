@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EV Battery Intelligence — AI Health &amp; Thermal Safety Monitor</title>
+  <meta name="description" content="AI-Based EV Battery State-of-Health and Thermal Safety Monitor. Real-time degradation analysis, predictive EOL, and thermal risk assessment.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- TOP NAVIGATION / HEADER -->
+  <header class="site-header">
+    <div class="header-brand">
+      <div class="brand-logo-wrap">
+        <svg class="brand-svg" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="8" y="4" width="20" height="28" rx="3" stroke="#06b6d4" stroke-width="1.5"/>
+          <rect x="13" y="1" width="10" height="4" rx="1.5" fill="#06b6d4"/>
+          <path d="M19 13L15 21h6l-4 8" stroke="#10b981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <div class="brand-title">EV BATTERY INTELLIGENCE</div>
+        <div class="brand-subtitle">AI-Based Battery Health &amp; Thermal Safety Monitor</div>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="header-stat">
+        <span class="header-stat-label">Chemistry</span>
+        <span class="header-stat-value" id="activeChemLabel">NMC</span>
+      </div>
+      <div class="header-stat">
+        <span class="header-stat-label">Cycles</span>
+        <span class="header-stat-value" id="headerCycleCount">120</span>
+      </div>
+      <div class="header-badge" id="apiStatusBadge">
+        <span class="pulse-dot" id="statusDot"></span>
+        <span id="apiStatusText">EDGE AI ONLINE</span>
+      </div>
+      <div class="header-time" id="headerTime">--:-- IST</div>
+    </div>
+  </header>
+
+  <!-- MAIN DASHBOARD -->
+  <main class="dashboard-main">
+
+    <!-- ROW 1: PRIMARY KPI SECTION -->
+    <section class="kpi-row" aria-label="Primary KPI Metrics">
+
+      <!-- SoH KPI - dominant card -->
+      <div class="kpi-card kpi-dominant" id="kpiSoh">
+        <div class="kpi-icon-wrap kpi-icon-cyan">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <div class="kpi-label">State of Health</div>
+        <div class="kpi-value" id="kpiSohVal">85.6<span class="kpi-unit">%</span></div>
+        <div class="kpi-gauge-bar">
+          <div class="kpi-gauge-fill" id="kpiSohBar" style="width:85.6%"></div>
+        </div>
+        <div class="kpi-badge status-good" id="kpiSohBadge">GOOD</div>
+        <div class="kpi-sub" id="kpiDegText">Degradation: 14.4%</div>
+      </div>
+
+      <!-- Thermal Risk KPI -->
+      <div class="kpi-card" id="kpiTrri">
+        <div class="kpi-icon-wrap kpi-icon-green">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+        </div>
+        <div class="kpi-label">Thermal Risk (TRRI)</div>
+        <div class="kpi-value" id="kpiTrriVal">11<span class="kpi-unit">%</span></div>
+        <div class="kpi-gauge-bar">
+          <div class="kpi-gauge-fill kpi-fill-green" id="kpiTrriBar" style="width:11%"></div>
+        </div>
+        <div class="kpi-badge status-good" id="kpiTrriBadge">LOW RISK</div>
+        <div class="kpi-sub" id="trriSub">Safe Margin</div>
+      </div>
+
+      <!-- RUL KPI -->
+      <div class="kpi-card" id="kpiRul">
+        <div class="kpi-icon-wrap kpi-icon-purple">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <div class="kpi-label">Remaining Useful Life</div>
+        <div class="kpi-value" id="kpiRulVal">4,760<span class="kpi-unit">km</span></div>
+        <div class="kpi-badge status-good" id="kpiRulBadge">ACTIVE</div>
+        <div class="kpi-sub" id="kpiRulCycles">56 cycles to 80% EoL</div>
+      </div>
+
+      <!-- Battery Status KPI -->
+      <div class="kpi-card" id="kpiBattStatus">
+        <div class="kpi-icon-wrap kpi-icon-cyan">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="11" x2="23" y2="13"/><path d="M5 12h8m-4-4l4 4-4 4"/></svg>
+        </div>
+        <div class="kpi-label">Battery Status</div>
+        <div class="kpi-value kpi-value-status" id="kpiBattStatusVal">HEALTHY</div>
+        <div class="kpi-badge status-good" id="kpiBattStatusBadge">OPERATIONAL</div>
+        <div class="kpi-sub" id="kpiBattStatusSub">No immediate anomaly</div>
+      </div>
+
+    </section>
+
+    <!-- ROW 2: CHART + BATTERY PACK VISUALIZATION -->
+    <section class="row-two-col">
+
+      <!-- BATTERY DEGRADATION / AI PREDICTION CHART -->
+      <div class="panel chart-panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Battery Degradation Trajectory</div>
+            <div class="panel-subtitle">Historical SoH vs AI-Predicted EOL (Cycles vs SoH %)</div>
+          </div>
+          <div class="panel-legend-group">
+            <span class="legend-dot" style="background:#06b6d4"></span><span class="legend-label">Historical</span>
+            <span class="legend-dot" style="background:#8b5cf6; margin-left:10px"></span><span class="legend-label">AI Predicted</span>
+            <span class="legend-dot" style="background:#ef4444; margin-left:10px"></span><span class="legend-label">80% EoL</span>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="trendChart"></canvas>
+        </div>
+        <div class="chart-footer">
+          <span class="chart-footer-item" id="eolProjection">Predicted EOL: ~1,240 cycles</span>
+          <span class="chart-footer-item" id="currentCycleMarker">Current: Cycle 120 — 85.6% SoH</span>
+          <span class="chart-footer-badge">EoL Threshold: 80.0%</span>
+        </div>
+      </div>
+
+      <!-- BATTERY DIGITAL TWIN / PACK VISUALIZATION -->
+      <div class="panel pack-panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Battery Digital Twin</div>
+            <div class="panel-subtitle" id="packSubtitle">NMC &bull; 120 Cycles &bull; 6S4P Configuration</div>
+          </div>
+          <div class="pack-temp-badge" id="packTempBadge">Pack Avg: 29.0 &deg;C</div>
+        </div>
+
+        <!-- Cell grid — 6 columns × 4 rows = 24 cells, each shows °C -->
+        <div class="cell-grid" id="cellGrid">
+          <!-- Generated by JS -->
+        </div>
+
+        <!-- Pack-level stats bar -->
+        <div class="pack-stats-bar">
+          <span class="pack-stat-item">24 Cells</span>
+          <span class="pack-stat-sep">&middot;</span>
+          <span class="pack-stat-item">6 Modules</span>
+          <span class="pack-stat-sep">&middot;</span>
+          <span class="pack-stat-item">&Delta;T: <strong id="packDeltaT">3.0 &deg;C</strong></span>
+          <span class="pack-stat-sep">&middot;</span>
+          <span class="pack-stat-item">Status: <strong id="packThermalStatus" class="status-good-text">NORMAL</strong></span>
+        </div>
+
+        <!-- Legend -->
+        <div class="pack-legend">
+          <span class="pack-leg-item"><span class="pack-leg-dot" style="background:#10b981"></span>&lt;35 &deg;C — Healthy</span>
+          <span class="pack-leg-item"><span class="pack-leg-dot" style="background:#f59e0b"></span>35-44 &deg;C — Warm</span>
+          <span class="pack-leg-item"><span class="pack-leg-dot" style="background:#ef4444"></span>&ge;45 &deg;C — Critical</span>
+        </div>
+      </div>
+
+      <!-- CELL DETAIL MODAL (click-triggered) -->
+      <div class="cell-modal-overlay" id="cellModalOverlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="cellModalTitle">
+        <div class="cell-modal">
+          <div class="cell-modal-header">
+            <div class="cell-modal-title" id="cellModalTitle">CELL 01</div>
+            <button class="cell-modal-close" id="cellModalClose" aria-label="Close">&times;</button>
+          </div>
+
+          <div class="cell-modal-badge" id="cellModalBadge">Healthy</div>
+
+          <div class="cell-modal-grid">
+            <div class="cm-row">
+              <span class="cm-label">Voltage</span>
+              <span class="cm-value" id="cmVoltage">3.82 V</span>
+            </div>
+            <div class="cm-row">
+              <span class="cm-label">Temperature</span>
+              <span class="cm-value" id="cmTemp">29.0 &deg;C</span>
+            </div>
+            <div class="cm-row">
+              <span class="cm-label">Resistance</span>
+              <span class="cm-value" id="cmRes">31.8 m&Omega;</span>
+            </div>
+            <div class="cm-row">
+              <span class="cm-label">SoH</span>
+              <span class="cm-value" id="cmSoh">85.6%</span>
+            </div>
+            <div class="cm-row">
+              <span class="cm-label">Cycles</span>
+              <span class="cm-value" id="cmCycles">120</span>
+            </div>
+          </div>
+
+          <div class="cell-modal-ai">
+            <div class="cm-ai-title">AI Assessment</div>
+            <div class="cm-ai-body" id="cmAiAssessment">Healthy &middot; No anomaly</div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ROW 3: AI DIAGNOSIS + DEGRADATION CONTRIBUTORS -->
+    <section class="row-two-col-equal">
+
+      <!-- AI DIAGNOSIS PANEL -->
+      <div class="panel diagnosis-panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">AI Battery Diagnosis</div>
+            <div class="panel-subtitle">Edge inference &bull; Simulated ML model</div>
+          </div>
+          <div class="ai-confidence-badge" id="aiConfBadge">Confidence: 94%</div>
+        </div>
+
+        <div class="diagnosis-status-row">
+          <div class="diag-status-indicator">
+            <span class="diag-pulse" id="diagPulseDot"></span>
+            <span class="diag-status-label" id="diagStatusLabel">HEALTHY</span>
+          </div>
+          <div class="diag-risk-badge status-good" id="diagRiskBadge">Risk: LOW</div>
+        </div>
+
+        <p class="diagnosis-message" id="diagMessage">
+          Battery operating within expected conditions. No immediate thermal anomaly detected.
+        </p>
+
+        <div class="diagnosis-grid">
+          <div class="diag-detail-item">
+            <span class="diag-detail-label">Primary Degradation</span>
+            <span class="diag-detail-value" id="diagPrimaryMechanism">Natural cycle aging</span>
+          </div>
+          <div class="diag-detail-item">
+            <span class="diag-detail-label">Risk Level</span>
+            <span class="diag-detail-value" id="diagRiskLevel">LOW</span>
+          </div>
+          <div class="diag-detail-item">
+            <span class="diag-detail-label">Predicted EOL</span>
+            <span class="diag-detail-value" id="diagEolPrediction">~1,240 cycles</span>
+          </div>
+          <div class="diag-detail-item">
+            <span class="diag-detail-label">AI Inference</span>
+            <span class="diag-detail-value">Edge Heuristic</span>
+          </div>
+        </div>
+
+        <!-- AI Pipeline Visualization -->
+        <div class="ai-pipeline">
+          <div class="pipeline-label">Edge AI Pipeline</div>
+          <div class="pipeline-steps">
+            <div class="pipe-step active">Telemetry</div>
+            <div class="pipe-arrow">&rsaquo;</div>
+            <div class="pipe-step active">Processing</div>
+            <div class="pipe-arrow">&rsaquo;</div>
+            <div class="pipe-step active" id="pipeInference">Inference</div>
+            <div class="pipe-arrow">&rsaquo;</div>
+            <div class="pipe-step active">SoH+TRRI</div>
+            <div class="pipe-arrow">&rsaquo;</div>
+            <div class="pipe-step active">EOL Forecast</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DEGRADATION CONTRIBUTORS (XAI) + THERMAL SECTION -->
+      <div class="panel xai-panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Degradation Contributors</div>
+            <div class="panel-subtitle">Explainable AI &mdash; degradation attribution</div>
+          </div>
+        </div>
+
+        <div class="xai-bar-group">
+          <div class="xai-bar-header">
+            <span class="xai-bar-name">Natural Cycle Aging (SEI Growth)</span>
+            <span class="xai-bar-pct" id="xaiCycleVal">65.0%</span>
+          </div>
+          <div class="xai-bar-track">
+            <div class="xai-bar-fill xai-fill-green" id="xaiCycleFill" style="width:65%"></div>
+          </div>
+          <div class="xai-bar-desc">Solid electrolyte interphase growth with cycle count</div>
+        </div>
+
+        <div class="xai-bar-group">
+          <div class="xai-bar-header">
+            <span class="xai-bar-name">Thermal Stress (Arrhenius &gt;30 &deg;C)</span>
+            <span class="xai-bar-pct" id="xaiThermalVal">15.0%</span>
+          </div>
+          <div class="xai-bar-track">
+            <div class="xai-bar-fill xai-fill-amber" id="xaiThermalFill" style="width:15%"></div>
+          </div>
+          <div class="xai-bar-desc">Elevated temperature accelerates lithium plating and SEI</div>
+        </div>
+
+        <div class="xai-bar-group">
+          <div class="xai-bar-header">
+            <span class="xai-bar-name">High C-Rate / Load Stress</span>
+            <span class="xai-bar-pct" id="xaiCrateVal">20.0%</span>
+          </div>
+          <div class="xai-bar-track">
+            <div class="xai-bar-fill xai-fill-blue" id="xaiCrateFill" style="width:20%"></div>
+          </div>
+          <div class="xai-bar-desc">Fast discharge stress on active material and electrolyte</div>
+        </div>
+
+        <div class="xai-separator"></div>
+
+        <!-- Thermal Safety Mini Section -->
+        <div class="thermal-mini-grid">
+          <div class="thermal-mini-item">
+            <div class="thermal-mini-label">Core Temperature</div>
+            <div class="thermal-mini-value" id="valTemp">29.0 &deg;C</div>
+          </div>
+          <div class="thermal-mini-item">
+            <div class="thermal-mini-label">Max Temperature</div>
+            <div class="thermal-mini-value" id="valTempMax">32.1 &deg;C</div>
+          </div>
+          <div class="thermal-mini-item">
+            <div class="thermal-mini-label">Temp Delta (&Delta;T)</div>
+            <div class="thermal-mini-value" id="valTempDelta">3.1 &deg;C</div>
+          </div>
+          <div class="thermal-mini-item">
+            <div class="thermal-mini-label">Thermal Status</div>
+            <div class="thermal-mini-value status-good-text" id="thermalStatusText">NORMAL</div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ROW 4: LIVE SENSOR STRIP -->
+    <section class="sensor-strip" aria-label="Live Sensor Readings">
+      <div class="sensor-card">
+        <div class="sensor-icon-char">&#x26A1;</div>
+        <div class="sensor-label">Terminal Voltage</div>
+        <div class="sensor-value" id="valVoltage">3.82 V</div>
+        <div class="sensor-sub">Operating bus</div>
+      </div>
+      <div class="sensor-card">
+        <div class="sensor-icon-char">&#x1F50C;</div>
+        <div class="sensor-label">Operating Current</div>
+        <div class="sensor-value" id="valCurrent">2.10 A</div>
+        <div class="sensor-sub">Discharge load</div>
+      </div>
+      <div class="sensor-card">
+        <div class="sensor-icon-char">&#x1F321;</div>
+        <div class="sensor-label">Core Temperature</div>
+        <div class="sensor-value" id="sensorTemp">29.0 &deg;C</div>
+        <div class="sensor-sub">DS18B20 digital</div>
+      </div>
+      <div class="sensor-card">
+        <div class="sensor-icon-char">&#x03A9;</div>
+        <div class="sensor-label">Internal Resistance</div>
+        <div class="sensor-value" id="valRes">28.4 m&Omega;</div>
+        <div class="sensor-sub">Thevenin 1RC ECM</div>
+      </div>
+      <div class="sensor-card">
+        <div class="sensor-icon-char">&#x1F4CA;</div>
+        <div class="sensor-label">SoH</div>
+        <div class="sensor-value" id="sensorSoh">85.6%</div>
+        <div class="sensor-sub">AI estimated</div>
+      </div>
+      <div class="sensor-card">
+        <div class="sensor-icon-char">&#x2699;</div>
+        <div class="sensor-label">C-Rate</div>
+        <div class="sensor-value" id="sensorCrate">0.55 C</div>
+        <div class="sensor-sub">Discharge rate</div>
+      </div>
+    </section>
+
+    <!-- ROW 5: SIMULATION, SAFETY & SECOND-LIFE -->
+    <section class="row-three-col">
+
+      <!-- SIMULATION & EDGE DIAGNOSTICS PANEL -->
+      <div class="panel sim-panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Simulation &amp; Edge Diagnostics</div>
+            <div class="panel-subtitle">Select preset or configure manually</div>
+          </div>
+          <div class="sim-live-tag">LIVE DEMO</div>
+        </div>
+
+        <div class="preset-grid">
+          <button type="button" class="btn-preset btn-preset-green" id="presetSafe">
+            <span class="preset-dot preset-dot-green"></span>
+            <div>
+              <div class="preset-name">Standard Drive</div>
+              <div class="preset-desc">Cycle 80 &middot; 27 &deg;C &middot; Safe</div>
+            </div>
+          </button>
+          <button type="button" class="btn-preset btn-preset-amber" id="presetHeat">
+            <span class="preset-dot preset-dot-amber"></span>
+            <div>
+              <div class="preset-name">High Temp Drive</div>
+              <div class="preset-desc">Cycle 190 &middot; 42 &deg;C &middot; Stress</div>
+            </div>
+          </button>
+          <button type="button" class="btn-preset btn-preset-amber" id="presetSolar">
+            <span class="preset-dot preset-dot-amber"></span>
+            <div>
+              <div class="preset-name">2nd-Life Solar</div>
+              <div class="preset-desc">Cycle 310 &middot; LFP &middot; 74% SoH</div>
+            </div>
+          </button>
+          <button type="button" class="btn-preset btn-preset-red" id="presetRunaway">
+            <span class="preset-dot preset-dot-red"></span>
+            <div>
+              <div class="preset-name">Thermal Stress</div>
+              <div class="preset-desc">48 &deg;C &middot; Relay Trip Demo</div>
+            </div>
+          </button>
+        </div>
+
+        <form id="predictionForm">
+          <div class="form-grid">
+            <div class="input-group">
+              <label for="inputChemistry">Battery Chemistry</label>
+              <select id="inputChemistry">
+                <option value="NMC" selected>NMC (High Energy)</option>
+                <option value="LFP">LFP (LiFePO4)</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label for="inputCycle">Cycle Count (N)</label>
+              <input type="number" id="inputCycle" value="120" min="1" max="1000">
+            </div>
+            <div class="input-group">
+              <label for="inputVoltage">Avg Voltage (V)</label>
+              <input type="number" step="0.01" id="inputVoltage" value="3.82">
+            </div>
+            <div class="input-group">
+              <label for="inputCurrent">Operating Current (A)</label>
+              <input type="number" step="0.01" id="inputCurrent" value="2.10">
+            </div>
+            <div class="input-group input-full">
+              <label for="inputTemp">Cell Core Temperature (&deg;C)</label>
+              <input type="number" step="0.1" id="inputTemp" value="29.0">
+            </div>
+          </div>
+
+          <button type="submit" class="btn-ai-diag" id="btnRunDiag">
+            <span class="btn-diag-icon">&#x25C8;</span>
+            <span id="btnDiagText">RUN AI DIAGNOSTIC</span>
+          </button>
+        </form>
+
+        <div class="diag-progress-wrap" id="diagProgressWrap" style="display:none;">
+          <div class="diag-progress-label" id="diagProgressLabel">Analyzing battery telemetry...</div>
+          <div class="diag-progress-track">
+            <div class="diag-progress-fill" id="diagProgressFill" style="width:0%"></div>
+          </div>
+          <div class="diag-progress-pct" id="diagProgressPct">0%</div>
+        </div>
+      </div>
+
+      <!-- SAFETY / RELAY STATUS PANEL -->
+      <div class="panel safety-panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">System Safety</div>
+            <div class="panel-subtitle">Simulated protection state</div>
+          </div>
+        </div>
+
+        <div class="safety-main" id="safetyMain">
+          <div class="safety-main-icon" id="safetyIcon">&#x2713;</div>
+          <div class="safety-main-label" id="safetyMainLabel">NORMAL</div>
+        </div>
+
+        <div class="alert-banner" id="alertBox">
+          <div class="alert-text" id="alertText">
+            Optimal electrothermal equilibrium. No degradation intervention required.
+          </div>
+        </div>
+
+        <div class="safety-grid">
+          <div class="safety-item">
+            <div class="safety-item-label">Relay Status</div>
+            <div class="safety-item-value relay-value" id="relayTag">ARMED &middot; CLOSED</div>
+          </div>
+          <div class="safety-item">
+            <div class="safety-item-label">Thermal Protection</div>
+            <div class="safety-item-value status-good-text" id="thermalProtStatus">ACTIVE</div>
+          </div>
+          <div class="safety-item">
+            <div class="safety-item-label">Anomaly Detection</div>
+            <div class="safety-item-value status-good-text">ACTIVE</div>
+          </div>
+          <div class="safety-item">
+            <div class="safety-item-label">Edge Inference</div>
+            <div class="safety-item-value status-good-text">RUNNING</div>
+          </div>
+        </div>
+
+        <!-- Event Timeline -->
+        <div class="timeline-section">
+          <div class="timeline-title">Diagnostic Timeline</div>
+          <ul class="timeline-list" id="timelineList">
+            <!-- Events added by JS -->
+          </ul>
+        </div>
+      </div>
+
+      <!-- SECOND-LIFE SUITABILITY PANEL -->
+      <div class="panel second-life-panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Second-Life Suitability</div>
+            <div class="panel-subtitle">Circular economy assessment</div>
+          </div>
+        </div>
+
+        <div class="sl-grade-display">
+          <div class="sl-grade-value" id="slGradeValue">A</div>
+          <div class="sl-grade-label" id="slGradeLabel">GRADE A</div>
+        </div>
+
+        <div class="sl-app-row">
+          <div class="sl-app-label">Recommended Application</div>
+          <div class="sl-app-value" id="secondLifeGrade">Secondary EV / 2-Wheeler</div>
+        </div>
+
+        <p class="sl-desc" id="secondLifeDesc">
+          Cell retains prime capacity. Recommended for primary EV mobility (Electric Vehicles &amp; 2-Wheelers).
+        </p>
+
+        <div class="sl-metrics">
+          <div class="sl-metric-item">
+            <div class="sl-metric-label">Residual Capacity</div>
+            <div class="sl-metric-value" id="slResidualCap">85.6%</div>
+          </div>
+          <div class="sl-metric-item">
+            <div class="sl-metric-label">Residual Valuation</div>
+            <div class="sl-metric-value" id="economicValText">~76.5%</div>
+          </div>
+          <div class="sl-metric-item">
+            <div class="sl-metric-label">Rec. Confidence</div>
+            <div class="sl-metric-value" id="slConfidence">91%</div>
+          </div>
+        </div>
+
+        <div class="sl-rul-bar">
+          <div class="sl-rul-label">
+            <span>Remaining Useful Life</span>
+            <span id="valRulKm">4,760 km</span>
+          </div>
+          <div class="rul-bar-track">
+            <div class="rul-bar-fill" id="rulBarFill" style="width:56%"></div>
+          </div>
+          <div class="sl-rul-sub" id="valRulCycles">56 cycles to 80% EoL</div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-left">
+      <span>EV Battery Intelligence Platform</span>
+      <span class="footer-sep">&middot;</span>
+      <span>AI-Based SoH &amp; Thermal Safety Monitor</span>
+      <span class="footer-sep">&middot;</span>
+      <span>Edge Heuristic Mode (Simulated)</span>
+    </div>
+    <div class="footer-right">
+      Last diagnostic: <span id="footerLastUpdate">--:--</span>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
