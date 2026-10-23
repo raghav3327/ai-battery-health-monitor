@@ -132,9 +132,13 @@ def predict():
         temp_max = float(data.get('temp_max', max(temp_avg, 32.0)))
         temp_range = max(0.1, temp_max - temp_avg)
         
-        discharge_duration_s = float(data.get('discharge_duration_s', 3000.0))
-        charge_duration_s = float(data.get('charge_duration_s', 3600.0))
         chemistry = str(data.get('chemistry', 'NMC')).upper()
+        if 'discharge_duration_s' not in data:
+            chem_factor = 0.55 if chemistry == 'LFP' else 1.0
+            est_capacity_ratio = max(0.2, 1.0 - (0.001 * cycle * chem_factor))
+            discharge_duration_s = 3600.0 * est_capacity_ratio
+
+        charge_duration_s = float(data.get('charge_duration_s', 3600.0))
         
         # 1. Base ML Prediction
         input_values = [
@@ -143,21 +147,21 @@ def predict():
             discharge_duration_s, charge_duration_s
         ]
         
-        if rf_model is not None and scaler_data is not None:
+        if rf_model is not None and scaler_data is not None and cycle <= 280:
             x_arr = np.array([input_values])
             x_min = np.array(scaler_data['min'])
             x_rng = np.array(scaler_data['range'])
             x_scaled = (x_arr - x_min) / x_rng
             raw_soh = float(rf_model.predict(x_scaled)[0])
         else:
-            # Fallback Physics-informed degradation curve
+            # Physics-informed degradation curve (supports extrapolation for cycle > 280 or offline ML)
             chem_factor = 0.55 if chemistry == 'LFP' else 1.0
-            temp_penalty = max(0.0, (temp_max - 30.0) * 0.08)
-            degrade = (0.11 * cycle * chem_factor) + temp_penalty
+            temp_penalty = max(0.0, (temp_max - 29.0) * 0.12)
+            degrade = (0.10 * cycle * chem_factor) + temp_penalty
             raw_soh = 100.0 - degrade
             
         # Adjust for LFP chemistry if user selected LFP (flatter degradation, higher cycle endurance)
-        if chemistry == 'LFP':
+        if chemistry == 'LFP' and cycle <= 280:
             # LFP cells undergo slower initial degradation
             raw_soh = min(100.0, raw_soh * 1.04)
 

@@ -1,7 +1,8 @@
 /*
   =============================================================================
   AI-Based EV Battery Health & Safety Monitor
-  ESP32 Edge Firmware with Autonomous Fail-Safe Thermal Interlock & IoT Telemetry
+  ESP32 Edge Firmware with Autonomous Fail-Safe Thermal Interlock & IoT
+  Telemetry
   =============================================================================
   Hardware Components:
   - ESP32 Development Board (NodeMCU / DevKit V1)
@@ -13,29 +14,29 @@
   =============================================================================
 */
 
-#include <WiFi.h>
-#include <HTTPClient.h>
-#include <Wire.h>
 #include <Adafruit_INA219.h>
-#include <OneWire.h>
 #include <DallasTemperature.h>
+#include <HTTPClient.h>
+#include <OneWire.h>
+#include <WiFi.h>
+#include <Wire.h>
 
 // Wi-Fi Credentials (Update with your Wi-Fi or Mobile Hotspot)
-const char* ssid = "YOUR_WIFI_SSID";
-const char* password = "YOUR_WIFI_PASSWORD";
+const char *ssid = "YOUR_WIFI_SSID";
+const char *password = "YOUR_WIFI_PASSWORD";
 
 // Flask ML API Endpoint (Update with your laptop's local LAN IP)
-const char* serverName = "http://192.168.1.100:5000/predict";
+const char *serverName = "http://192.168.1.100:5000/predict";
 
 // Pin Allocations
-#define ONE_WIRE_BUS 4     // DS18B20 Data pin (with 4.7k pull-up to 3.3V)
-#define RELAY_PIN    25    // 5V Relay control pin (Controls battery load/charge)
-#define BUZZER_PIN   19    // Acoustic alarm buzzer
-#define LED_PIN      2     // Built-in status indicator LED
+#define ONE_WIRE_BUS 4 // DS18B20 Data pin (with 4.7k pull-up to 3.3V)
+#define RELAY_PIN 25   // 5V Relay control pin (Controls battery load/charge)
+#define BUZZER_PIN 19  // Acoustic alarm buzzer
+#define LED_PIN 2      // Built-in status indicator LED
 
 // Safety Thresholds (Autonomous Edge Fail-Safe)
-#define TEMP_CRITICAL_THRESHOLD  45.0  // °C - Instant hardware relay cutoff
-#define TEMP_WARNING_THRESHOLD   38.0  // °C - Warning beep & telemetry alert
+#define TEMP_CRITICAL_THRESHOLD 45.0 // °C - Instant hardware relay cutoff
+#define TEMP_WARNING_THRESHOLD 38.0  // °C - Warning beep & telemetry alert
 
 // Sensor Instances
 Adafruit_INA219 ina219;
@@ -68,7 +69,8 @@ void setup() {
 
   // Initialize INA219 I2C
   if (!ina219.begin()) {
-    Serial.println("[ERROR] Could not detect INA219 sensor. Check I2C wiring (SDA=21, SCL=22)!");
+    Serial.println("[ERROR] Could not detect INA219 sensor. Check I2C wiring "
+                   "(SDA=21, SCL=22)!");
   } else {
     Serial.println("[OK] INA219 Current/Voltage Sensor initialized.");
   }
@@ -82,18 +84,20 @@ void setup() {
   Serial.print("[INFO] Connecting to Wi-Fi: ");
   Serial.println(ssid);
   WiFi.begin(ssid, password);
-  
+
   int attempts = 0;
   while (WiFi.status() != WL_CONNECTED && attempts < 20) {
     delay(500);
     Serial.print(".");
     attempts++;
   }
-  
+
   if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("\n[SUCCESS] Wi-Fi Connected! IP Address: " + WiFi.localIP().toString());
+    Serial.println("\n[SUCCESS] Wi-Fi Connected! IP Address: " +
+                   WiFi.localIP().toString());
   } else {
-    Serial.println("\n[WARNING] Wi-Fi timeout. System running in Autonomous Standalone Edge Mode.");
+    Serial.println("\n[WARNING] Wi-Fi timeout. System running in Autonomous "
+                   "Standalone Edge Mode.");
   }
 }
 
@@ -101,7 +105,7 @@ void loop() {
   // 1. Read Physical Sensor Values
   sensors.requestTemperatures();
   float currentTemp = sensors.getTempCByIndex(0);
-  
+
   // Guard against disconnected sensor reading (-127°C)
   if (currentTemp < -50.0 || currentTemp > 125.0) {
     currentTemp = 28.5; // Fallback nominal value if disconnected
@@ -126,8 +130,10 @@ void loop() {
       digitalWrite(BUZZER_PIN, HIGH);
       digitalWrite(LED_PIN, LOW);
       relayTripped = true;
-      Serial.println("\n🚨 [EMERGENCY INTERLOCK TRIPPED] Thermal Runaway Precursor Detected!");
-      Serial.printf("   Cell Temp: %.2f °C >= %.2f °C Limit. Relay Opened!\n", currentTemp, TEMP_CRITICAL_THRESHOLD);
+      Serial.println("\n🚨 [EMERGENCY INTERLOCK TRIPPED] Thermal Runaway "
+                     "Precursor Detected!");
+      Serial.printf("   Cell Temp: %.2f °C >= %.2f °C Limit. Relay Opened!\n",
+                    currentTemp, TEMP_CRITICAL_THRESHOLD);
     }
   } else if (currentTemp >= TEMP_WARNING_THRESHOLD) {
     // Pulse buzzer warning
@@ -141,7 +147,8 @@ void loop() {
       digitalWrite(BUZZER_PIN, LOW);
       digitalWrite(LED_PIN, HIGH);
       relayTripped = false;
-      Serial.println("✅ [SYSTEM NORMALIZED] Temperature safe. Relay re-engaged.");
+      Serial.println(
+          "✅ [SYSTEM NORMALIZED] Temperature safe. Relay re-engaged.");
     }
   }
 
@@ -152,8 +159,9 @@ void loop() {
   if (now - lastSendTime >= sendInterval) {
     lastSendTime = now;
 
-    Serial.printf("[TELEMETRY] V: %.2fV | I: %.2fA | T: %.2f°C | Relay: %s\n", 
-                  busVoltage, current_A, currentTemp, relayTripped ? "OPEN (TRIPPED)" : "CLOSED (NORMAL)");
+    Serial.printf("[TELEMETRY] V: %.2fV | I: %.2fA | T: %.2f°C | Relay: %s\n",
+                  busVoltage, current_A, currentTemp,
+                  relayTripped ? "OPEN (TRIPPED)" : "CLOSED (NORMAL)");
 
     if (WiFi.status() == WL_CONNECTED) {
       HTTPClient http;
@@ -170,7 +178,8 @@ void loop() {
       payload += "\"temp_avg\":" + String(currentTemp, 2) + ",";
       payload += "\"temp_max\":" + String(currentTemp, 2) + ",";
       payload += "\"chemistry\":\"NMC\",";
-      payload += "\"relay_state\":\"" + String(relayTripped ? "TRIPPED" : "NORMAL") + "\"";
+      payload += "\"relay_state\":\"" +
+                 String(relayTripped ? "TRIPPED" : "NORMAL") + "\"";
       payload += "}";
 
       int httpResponseCode = http.POST(payload);
@@ -182,7 +191,7 @@ void loop() {
       }
       http.end();
     }
-    
+
     // Increment cycle count slowly for live progression testing
     if (!relayTripped) {
       cycleCount++;

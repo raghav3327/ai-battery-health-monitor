@@ -1,0 +1,3 @@
+backend cmd:python api/app.py
+sensors cmd:python simulator/sensor_simulator.py
+dashboard cmd:Start-Process dashboard/index.html
