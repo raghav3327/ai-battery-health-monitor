@@ -51,6 +51,7 @@ ai-battery-health-monitor/
 │   └── prepare_dataset.py
 │
 ├── docs/                         # Strategy, Math & Architecture Specs
+│   ├── PROJECT_EXPLANATION.md            # Comprehensive project overview & technical guide
 │   ├── AWARD_WINNING_STRATEGY.md         # Master strategy, Viva Q&A & Stall layout
 │   ├── 01_problem_definition_and_literature_review.md
 │   ├── 02_system_architecture.md
@@ -114,5 +115,6 @@ Open `dashboard/index.html` directly in your browser or serve via Live Server.
 ---
 
 ## 🏆 Project Resources
+- 📘 Read the [Comprehensive Project Explanation](file:///c:/Users/Harshith%20S%20Raghav/.gemini/antigravity-ide/scratch/ai-battery-health-monitor/docs/PROJECT_EXPLANATION.md) for full project architecture, innovations, and step-by-step walkthrough.
 - 📖 Read the complete [Award-Winning Strategy Guide](file:///c:/Users/Harshith%20S%20Raghav/.gemini/antigravity-ide/scratch/ai-battery-health-monitor/docs/AWARD_WINNING_STRATEGY.md) for exhibition stall checklist and top 10 viva defense questions.
 - 📐 Read the [Mathematical Modeling & Algorithms](file:///c:/Users/Harshith%20S%20Raghav/.gemini/antigravity-ide/scratch/ai-battery-health-monitor/docs/03_mathematical_modelling_and_algorithms.md) for Arrhenius degradation and Thevenin ECM equations.
