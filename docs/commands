@@ -1,3 +1,16 @@
 backend cmd:python api/app.py
 sensors cmd:python simulator/sensor_simulator.py
 dashboard cmd:Start-Process dashboard/index.html
+
+testing api models data_pipeline simulator: 
+python -m pytest --cov=api --cov=models --cov=data --cov=simulator --cov-report=term-missing
+ruff check tests
+
+# 1. Run all 26 Python tests (uses pyproject.toml settings)
+python -m pytest
+
+# 2. Run all 4 Node.js dashboard unit & DOM parity tests
+node --test tests/test_dashboard.mjs
+
+# 3. Lint the tests folder
+ruff check tests
