@@ -14,3 +14,30 @@ node --test tests/test_dashboard.mjs
 
 # 3. Lint the tests folder
 ruff check tests
+
+# Run all 10 tests (headless)
+npm.cmd test
+
+# Run all 10 tests with visible Chromium browser
+npm.cmd run test:headed
+
+# Run Playwright interactive UI runner
+npm.cmd run test:ui
+
+# Run directly with npx
+npx.cmd playwright test
+
+# Run a specific test by ID (TC01..TC10)
+npx.cmd playwright test -g "TC01"
+npx.cmd playwright test -g "TC07"
+
+# Run with Playwright Inspector (step-by-step debug)
+npx.cmd playwright test --debug
+
+# Run single worker sequentially (slow/debug friendly)
+npx.cmd playwright test --workers=1 --headed
+
+test report view cmds 
+npm.cmd run report
+# or:
+npx.cmd playwright show-report
