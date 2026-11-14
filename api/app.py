@@ -12,7 +12,7 @@ import hashlib
 from datetime import datetime
 import joblib
 import numpy as np
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 
 import sys
@@ -31,6 +31,7 @@ app = Flask(__name__)
 CORS(app)  # Enable Cross-Origin requests for Web Dashboard
 
 MODELS_DIR = os.path.join(BASE_DIR, 'models')
+DASHBOARD_DIR = os.path.join(BASE_DIR, 'dashboard')
 DB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database')
 os.makedirs(DB_DIR, exist_ok=True)
 DB_PATH = os.path.join(DB_DIR, 'predictions.db')
@@ -351,6 +352,17 @@ def metrics():
             data = json.load(f)
         return jsonify({'success': True, 'metrics': data})
     return jsonify({'success': False, 'message': 'Metrics not generated yet'}), 404
+
+@app.route('/')
+def serve_dashboard():
+    return send_from_directory(DASHBOARD_DIR, 'index.html')
+
+@app.route('/<path:filename>')
+def serve_dashboard_file(filename):
+    file_path = os.path.join(DASHBOARD_DIR, filename)
+    if os.path.isfile(file_path):
+        return send_from_directory(DASHBOARD_DIR, filename)
+    return jsonify({'error': 'Not found'}), 404
 
 if __name__ == '__main__':
     print("[INFO] Starting EV Battery Health & Safety Server on http://127.0.0.1:5000")
